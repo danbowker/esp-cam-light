@@ -18,8 +18,6 @@ const char* PASSWORD = "SwinyardHill";
 
 #include <HTTPClient.h>
 String server = "http://192.168.1.110:5010/webcam";
-HTTPClient http;
-
 
 #include <Adafruit_NeoPixel.h>
 #define LED_COUNT 11
@@ -41,17 +39,23 @@ void setup() {
   Serial.println("Connected to WiFi");
   delay(100);
 
-  http.begin(server.c_str());
-
   strip.begin();
   strip.setBrightness(100);
   delay(100);
 }
 
 void loop() {
+  HTTPClient http;
+  http.begin(server.c_str());
   int httpCode = http.GET();
-  String result = http.getString();
-
+  String result;
+  if (httpCode > 0) {
+    result = http.getString();
+  }
+  else {
+    Serial.println("Error on HTTP request: " + http.errorToString(httpCode));
+  }
+  
   Serial.println(result);
 
   if (result == "true") {
@@ -70,6 +74,8 @@ void loop() {
     }
     strip.show();
   }
+
+  http.end();
   delay(2500);
 }
 
