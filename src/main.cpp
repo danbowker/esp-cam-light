@@ -18,9 +18,10 @@ const char* PASSWORD = "SwinyardHill";
 
 #include <HTTPClient.h>
 String server = "http://192.168.1.110:5010/webcam";
+HTTPClient http;
+
 
 #include <Adafruit_NeoPixel.h>
-
 #define LED_COUNT 11
 #define LED_PIN 15
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -40,15 +41,14 @@ void setup() {
   Serial.println("Connected to WiFi");
   delay(100);
 
+  http.begin(server.c_str());
+
   strip.begin();
   strip.setBrightness(100);
   delay(100);
 }
 
 void loop() {
-  HTTPClient http;
-  http.begin(server.c_str());
-
   int httpCode = http.GET();
   String result = http.getString();
 
