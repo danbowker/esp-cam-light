@@ -7,7 +7,14 @@
             "top": 0,
             "left": 0,
             "attrs": {}
-        }
+        },
+        {
+            "type": "wokwi-led-ring",
+            "id": "ring1",
+            "top": -139.44,
+            "left": 408.42,
+            "attrs": { "pixels": "16" }
+          }
     ],
     "connections": [
         [
@@ -21,6 +28,9 @@
             "$serialMonitor:TX",
             "",
             []
-        ]
-    ]
+        ],
+        [ "ring1:GND", "esp:GND.3", "black", [ "v205.99", "h-281.18" ] ],
+        [ "ring1:VCC", "esp:5V", "red", [ "v193.31", "h-313.48" ] ],
+        [ "ring1:DIN", "esp:15", "green", [ "v25.95", "h-89.58", "v-86.38", "h-187.61" ] ]
+       ]
 }
