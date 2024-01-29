@@ -10,13 +10,21 @@
  Created: Jan 25, 2023 by Hans Scharler (https://nothans.com)
 */
 
-#include <WiFi.h>
+#ifdef ESP32
+  #include <WiFi.h>
+  #include <HTTPClient.h>
+#endif
+
+#ifdef ESP8266
+  #include <ESP8266WiFi.h>
+  #include <ESP8266HTTPClient.h>
+#endif
 
 WiFiClient client;
 #include <credentials.h>
 
-#include <HTTPClient.h>
-#define server "http://192.168.1.110:5010/webcam"
+// #define server "http://host.wokwi.internal:5010/webcam"
+#define server "http://10.240.170.51:5010/webcam"
 
 #include <Adafruit_NeoPixel.h>
 #define LED_COUNT 11
@@ -45,7 +53,7 @@ void setup() {
 
 void loop() {
   HTTPClient http;
-  http.begin(server);
+  http.begin(client, server);
   int httpCode = http.GET();
   String result;
   if (httpCode > 0) {
