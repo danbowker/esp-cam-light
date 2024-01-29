@@ -1,13 +1,7 @@
 /*
- Get Field1 of a ThingSpeak Channel and Set State of
- WS2812 NeoPixel Strip using ESP32
- Requirements:
-   * ESP32 Wi-Fi Device
-   * Arduino 2.0.3+ IDE
-   * Additional Boards URL: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-   * Library: ThingSpeak by MathWorks
-   * Library: Adafruit NeoPixel by Adafruit
- Created: Jan 25, 2023 by Hans Scharler (https://nothans.com)
+Query a webserver to see if the webcam is on or off amd turn on or off the LED strip accordingly
+Example webserver can be found at: https://github.com/danbowker/WebCamServer
+Runs on ESP32 or ESP8266 and works with RGB LED strip.
 */
 
 #ifdef ESP32
