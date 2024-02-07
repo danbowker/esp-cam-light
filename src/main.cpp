@@ -51,12 +51,15 @@ void setup()
 void loop()
 {
   HTTPClient http;
+  Serial.println("Checking webcam state at " + String(cam_state_url));
   http.begin(client, cam_state_url);
   int httpCode = http.GET();
+  Serial.println("HTTP code: " + String(httpCode));
   String result;
   if (httpCode > 0)
   {
     result = http.getString();
+    Serial.println("Webcam state: " + result);
   }
   else
   {
