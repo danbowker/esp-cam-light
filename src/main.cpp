@@ -7,11 +7,7 @@ Runs on ESP32 or ESP8266 and works with RGB LED strip.
 #ifdef ESP32
 #include <WiFi.h>
 #include <HTTPClient.h>
-#endif
-
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
+#include <ESPmDNS.h>
 #endif
 
 WiFiClient client;
@@ -43,16 +39,47 @@ void setup()
   Serial.println("Connected to WiFi");
   delay(100);
 
+  while (mdns_init() != ESP_OK)
+  {
+    delay(1000);
+    Serial.println("Starting MDNS...");
+  }
+
   strip.begin();
   strip.setBrightness(100);
   delay(100);
+
+
 }
 
 void loop()
 {
+  // Get the host name out of cam_stat_url
+  String cam_state_url_resolved = String(cam_state_url);
+  String cam_state_url_host;
+  int portIndex = cam_state_url_resolved.indexOf(":", 7);
+  if (portIndex != -1) {
+    cam_state_url_host = cam_state_url_resolved.substring(7, portIndex);
+  } else {
+    cam_state_url_host = cam_state_url_resolved.substring(7);
+  }
+
+  IPAddress serverIp;
+  while (serverIp.toString() == "0.0.0.0")
+  {
+    Serial.println("Resolving host: " + cam_state_url_host);
+    delay(250);
+    serverIp = MDNS.queryHost(cam_state_url_host);
+  }
+
+  Serial.println("Resolved to: " + serverIp.toString());
+
+  // and then rebulid the URL with the IP address by replacing the host name with the IP address
+  cam_state_url_resolved.replace(cam_state_url_host, serverIp.toString());
+
   HTTPClient http;
-  Serial.println("Checking webcam state at " + String(cam_state_url));
-  http.begin(client, cam_state_url);
+  Serial.println("Checking webcam state at " + cam_state_url_resolved);
+  http.begin(client, cam_state_url_resolved);
   int httpCode = http.GET();
   Serial.println("HTTP code: " + String(httpCode));
   String result;
@@ -69,10 +96,10 @@ void loop()
   if (result == "true")
   {
     // Turn on
-    if(!on)
+    if (!on)
     {
       Serial.println("Turning on");
-      on = true;      
+      on = true;
     }
     for (int i = 0; i < LED_COUNT; i++)
     {
@@ -83,10 +110,10 @@ void loop()
   else
   {
     // Turn off
-    if(on)
+    if (on)
     {
       Serial.println("Turning off");
-      on = false;      
+      on = false;
     }
     for (int i = 0; i < LED_COUNT; i++)
     {
