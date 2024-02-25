@@ -21,6 +21,65 @@ WiFiClient client;
 #define LED_PIN 15
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 bool on = false;
+String cam_state_url_host;
+String cam_state_url_resolved;
+
+void resolveHostInUrlToIp()
+{
+  cam_state_url_resolved = String(cam_state_url);
+  int portIndex = cam_state_url_resolved.indexOf(":", 7);
+  if (portIndex != -1)
+  {
+    cam_state_url_host = cam_state_url_resolved.substring(7, portIndex);
+  }
+  else
+  {
+    cam_state_url_host = cam_state_url_resolved.substring(7);
+  }
+
+  IPAddress serverIp;
+  while (serverIp.toString() == "0.0.0.0")
+  {
+    Serial.println("Resolving host: " + cam_state_url_host);
+    delay(250);
+    serverIp = MDNS.queryHost(cam_state_url_host);
+  }
+
+  Serial.println("Resolved to: " + serverIp.toString());
+
+  // and then rebulid the URL with the IP address by replacing the host name with the IP address
+  cam_state_url_resolved.replace(cam_state_url_host, serverIp.toString());
+}
+
+void switchLight(bool turnOn)
+{
+  if (turnOn)
+  {
+    if (!on)
+    {
+      Serial.println("Turning on");
+      on = true;
+    }
+    for (int i = 0; i < LED_COUNT; i++)
+    {
+      strip.setPixelColor(i, strip.Color(255, 0, 0));
+    }
+    strip.show();
+  }
+  else
+  {
+    if (on)
+    {
+      Serial.println("Turning off");
+      on = false;
+    }
+    for (int i = 0; i < LED_COUNT; i++)
+    {
+      strip.setPixelColor(i, strip.Color(0, 0, 0));
+    }
+    strip.show();
+  }
+}
 
 void setup()
 {
@@ -49,34 +108,11 @@ void setup()
   strip.setBrightness(100);
   delay(100);
 
-
+  resolveHostInUrlToIp();
 }
 
 void loop()
 {
-  // Get the host name out of cam_stat_url
-  String cam_state_url_resolved = String(cam_state_url);
-  String cam_state_url_host;
-  int portIndex = cam_state_url_resolved.indexOf(":", 7);
-  if (portIndex != -1) {
-    cam_state_url_host = cam_state_url_resolved.substring(7, portIndex);
-  } else {
-    cam_state_url_host = cam_state_url_resolved.substring(7);
-  }
-
-  IPAddress serverIp;
-  while (serverIp.toString() == "0.0.0.0")
-  {
-    Serial.println("Resolving host: " + cam_state_url_host);
-    delay(250);
-    serverIp = MDNS.queryHost(cam_state_url_host);
-  }
-
-  Serial.println("Resolved to: " + serverIp.toString());
-
-  // and then rebulid the URL with the IP address by replacing the host name with the IP address
-  cam_state_url_resolved.replace(cam_state_url_host, serverIp.toString());
-
   HTTPClient http;
   Serial.println("Checking webcam state at " + cam_state_url_resolved);
   http.begin(client, cam_state_url_resolved);
@@ -91,35 +127,18 @@ void loop()
   else
   {
     Serial.println("Error on HTTP request: " + http.errorToString(httpCode));
+    switchLight(false);
+    Serial.println("Try and resolve the host again");
+    resolveHostInUrlToIp();
   }
 
   if (result == "true")
   {
-    // Turn on
-    if (!on)
-    {
-      Serial.println("Turning on");
-      on = true;
-    }
-    for (int i = 0; i < LED_COUNT; i++)
-    {
-      strip.setPixelColor(i, strip.Color(255, 0, 0));
-    }
-    strip.show();
+    switchLight(true);
   }
   else
   {
-    // Turn off
-    if (on)
-    {
-      Serial.println("Turning off");
-      on = false;
-    }
-    for (int i = 0; i < LED_COUNT; i++)
-    {
-      strip.setPixelColor(i, strip.Color(0, 0, 0));
-    }
-    strip.show();
+    switchLight(false);
   }
 
   http.end();
