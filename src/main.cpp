@@ -1,21 +1,17 @@
 /*
 Query a webcam_state_url to see if the webcam is on or off amd turn on or off the LED strip accordingly
-Example webcam_state_url can be found at: https://github.com/danbowker/WebCamcam_state_url
-Runs on ESP32 or ESP8266 and works with RGB LED strip.
+Example webcam state service can be found at: https://github.com/danbowker/WebCamServer
+Runs on ESP32 works with RGB LED strip.
 */
 
-#ifdef ESP32
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ESPmDNS.h>
-#endif
+#include <connection.h>
+#include <Adafruit_NeoPixel.h>
 
 WiFiClient client;
-
 // SSID, PASSWORD and cam_state_url are #defined in connection.h
-#include <connection.h>
-
-#include <Adafruit_NeoPixel.h>
 
 #define LED_COUNT 11
 #define LED_PIN 15
