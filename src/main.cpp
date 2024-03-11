@@ -9,7 +9,6 @@ Runs on ESP32 works with RGB LED strip.
 #include <ESPmDNS.h>
 #include <connection.h>
 #include <Adafruit_NeoPixel.h>
-#include "Arduino.h"
 
 WiFiClient client;
 // SSID, PASSWORD and cam_state_url are #defined in connection.h
@@ -21,9 +20,9 @@ bool on = false;
 String cam_state_url_host;
 String cam_state_url_resolved;
 
-void setupWiFi()
+void wiFiInit()
 {
-  bool connected = false;
+  bool connected = WiFi.status() == WL_CONNECTED;
   while (!connected)
   {
     Serial.println("Initializing WiFi...");
@@ -61,6 +60,7 @@ void mdnsInit()
 
 void resolveHostInUrlToIp()
 {
+  wiFiInit();
   mdnsInit();
 
   cam_state_url_resolved = String(cam_state_url);
@@ -84,6 +84,7 @@ void resolveHostInUrlToIp()
     attempts++;
     if (attempts > 10)
     {
+      wiFiInit();
       mdnsInit();
       attempts = 0;
     }
@@ -130,7 +131,7 @@ void setup()
   Serial.begin(115200);
   delay(1000);
 
-  setupWiFi();
+  wiFiInit();
 
       Serial.println("Connected to WiFi");
   delay(100);
