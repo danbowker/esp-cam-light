@@ -20,8 +20,49 @@ bool on = false;
 String cam_state_url_host;
 String cam_state_url_resolved;
 
+void wiFiInit()
+{
+  bool connected = WiFi.status() == WL_CONNECTED;
+  while (!connected)
+  {
+    Serial.println("Initializing WiFi...");
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, PASSWORD);
+
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      delay(1000);
+      Serial.println("Connecting to WiFi...");
+      attempts++;
+      if (attempts > 10)
+      {
+        Serial.println("Failed to connect to WiFi");
+        break;
+      }
+    }
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      connected = true;
+    }
+  }
+}
+
+void mdnsInit()
+{
+  while (mdns_init() != ESP_OK)
+  {
+    delay(1000);
+    Serial.println("Starting MDNS...");
+  }
+}
+
 void resolveHostInUrlToIp()
 {
+  wiFiInit();
+  mdnsInit();
+
   cam_state_url_resolved = String(cam_state_url);
   int portIndex = cam_state_url_resolved.indexOf(":", 7);
   if (portIndex != -1)
@@ -34,11 +75,19 @@ void resolveHostInUrlToIp()
   }
 
   IPAddress serverIp;
+  int attempts = 0;
   while (serverIp.toString() == "0.0.0.0")
   {
     Serial.println("Resolving host: " + cam_state_url_host);
     delay(250);
     serverIp = MDNS.queryHost(cam_state_url_host);
+    attempts++;
+    if (attempts > 10)
+    {
+      wiFiInit();
+      mdnsInit();
+      attempts = 0;
+    }
   }
 
   Serial.println("Resolved to: " + serverIp.toString());
@@ -80,25 +129,12 @@ void switchLight(bool turnOn)
 void setup()
 {
   Serial.begin(115200);
+  delay(1000);
+
+  wiFiInit();
+
+      Serial.println("Connected to WiFi");
   delay(100);
-
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(SSID, PASSWORD);
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-
-  Serial.println("Connected to WiFi");
-  delay(100);
-
-  while (mdns_init() != ESP_OK)
-  {
-    delay(1000);
-    Serial.println("Starting MDNS...");
-  }
 
   strip.begin();
   strip.setBrightness(100);
@@ -109,6 +145,9 @@ void setup()
 
 void loop()
 {
+  // print out available memory
+  Serial.println("Free memory: " + String(ESP.getFreeHeap()));
+
   HTTPClient http;
   Serial.println("Checking webcam state at " + cam_state_url_resolved);
   http.begin(client, cam_state_url_resolved);
